@@ -1,0 +1,50 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfplan
+.terraform.lock.hcl
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+.vercel/
+dist/
+
+# Secrets & env
+.env
+.env.*
+!.env.example
+*.pem
+secrets.json
+.secrets.baseline.local
+
+# AWS
+.aws-sam/
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Build artifacts
+*.zip
+lambda_build/
+
+# Windows zone identifier files
+*:Zone.Identifier

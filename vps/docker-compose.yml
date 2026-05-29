@@ -1,0 +1,38 @@
+# REFERENCIA — NO desplegar tal cual.
+#
+# El VPS de producción YA tiene un stack n8n + Evolution API + Postgres detrás de
+# Traefik (con SSL Let's Encrypt) gestionado en `/docker/n8n/` del propio VPS:
+#   - n8n:           https://n8n.srv1484800.hstgr.cloud  (DB_TYPE=sqlite)
+#   - Evolution API: ${EVOLUTION_SUBDOMAIN}.${DOMAIN_NAME}
+# Levantar este compose chocaría de puertos con ese stack. Se conserva solo como
+# documentación de los servicios que OpsRopz consume.
+#
+# El simulador NO corre aquí: se ejecuta por cron (ver vps/simulator/README.md).
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - N8N_HOST=${N8N_HOST}
+      - N8N_PROTOCOL=https
+      - WEBHOOK_URL=https://${N8N_HOST}/
+      - GENERIC_TIMEZONE=America/Lima
+    volumes:
+      - n8n_data:/home/node/.n8n
+
+  evolution-api:
+    image: atendai/evolution-api:latest
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - AUTHENTICATION_API_KEY=${EVOLUTION_API_KEY}
+    volumes:
+      - evolution_data:/evolution/instances
+
+volumes:
+  n8n_data:
+  evolution_data:

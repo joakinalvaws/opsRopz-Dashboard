@@ -1,0 +1,9 @@
+# Herramientas de desarrollo y CI (versiones fijadas para reproducibilidad)
+ruff==0.8.4
+black==24.10.0
+pytest==8.3.4
+pytest-cov==6.0.0
+moto[sqs,dynamodb,sns]==5.0.22
+boto3==1.35.81
+pip-audit==2.7.3
+pre-commit==4.0.1

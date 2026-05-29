@@ -1,0 +1,10 @@
+# OpsRopz — simulador de eventos retail.
+# Instalar con: sudo cp crontab.example /etc/cron.d/opsropz-simulator
+# Reemplazar <ACCOUNT_ID> con la cuenta AWS y ajustar la región si aplica.
+# La env var se toma del output de Terraform `events_queue_url`.
+
+EVENTS_QUEUE_URL=https://sqs.us-east-1.amazonaws.com/<ACCOUNT_ID>/opsropz-events-prod
+AWS_REGION=us-east-1
+BATCH_SIZE=10
+
+*/5 * * * * opsropz cd /opt/opsropz/simulator && /opt/opsropz/venv/bin/python main.py >> /var/log/opsropz-sim.log 2>&1
