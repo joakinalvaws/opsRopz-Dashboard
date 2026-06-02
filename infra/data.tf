@@ -26,6 +26,35 @@ resource "aws_dynamodb_table" "operations" {
   }
 }
 
+# Tabla de alertas (Semana 4) — historial que consume el dashboard.
+# Partición fija "ALERT" + sort key temporal: permite consultar las N alertas más
+# recientes con un solo Query. TTL de 30 días para no crecer sin límite.
+resource "aws_dynamodb_table" "alerts" {
+  name         = "${var.name_prefix}-alerts-${var.environment}"
+  billing_mode = "PAY_PER_REQUEST"
+  hash_key     = "alert_partition"
+  range_key    = "created_id"
+
+  attribute {
+    name = "alert_partition"
+    type = "S"
+  }
+
+  attribute {
+    name = "created_id"
+    type = "S"
+  }
+
+  ttl {
+    attribute_name = "ttl"
+    enabled        = true
+  }
+
+  point_in_time_recovery {
+    enabled = var.environment == "prod"
+  }
+}
+
 resource "aws_sqs_queue" "events_dlq" {
   name                      = "${var.name_prefix}-events-dlq-${var.environment}"
   message_retention_seconds = 1209600 # 14 días para análisis posterior

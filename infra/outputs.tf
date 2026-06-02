@@ -47,3 +47,24 @@ output "cloudwatch_dashboard_url" {
   description = "URL del CloudWatch Dashboard en la consola de AWS"
   value       = "https://${var.aws_region}.console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#dashboards:name=${aws_cloudwatch_dashboard.main.dashboard_name}"
 }
+
+output "alerts_table_name" {
+  description = "Nombre de la tabla DynamoDB de alertas (historial)"
+  value       = aws_dynamodb_table.alerts.name
+}
+
+output "query_function_name" {
+  description = "Nombre de la Lambda query"
+  value       = aws_lambda_function.query.function_name
+}
+
+output "dashboard_api_url" {
+  description = "URL base del API Gateway del dashboard (endpoints /kpis y /alerts)"
+  value       = aws_api_gateway_stage.dashboard.invoke_url
+}
+
+output "dashboard_api_key" {
+  description = "API key para el dashboard (usar server-side en Vercel, no en el navegador)"
+  value       = aws_api_gateway_api_key.dashboard.value
+  sensitive   = true
+}

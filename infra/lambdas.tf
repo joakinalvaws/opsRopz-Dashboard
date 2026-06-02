@@ -64,6 +64,7 @@ resource "aws_lambda_function" "analyzer" {
     variables = {
       BEDROCK_MODEL_ID = var.bedrock_model_id
       SNS_TOPIC_ARN    = aws_sns_topic.ops_alerts.arn
+      ALERTS_TABLE     = aws_dynamodb_table.alerts.name
     }
   }
 }
@@ -145,5 +146,37 @@ resource "aws_lambda_event_source_mapping" "analyzer_stream" {
 
 resource "aws_cloudwatch_log_group" "analyzer" {
   name              = "/aws/lambda/${aws_lambda_function.analyzer.function_name}"
+  retention_in_days = 14
+}
+
+# --- query (Semana 4): expone KPIs y alertas vía API Gateway ---
+
+data "archive_file" "query" {
+  type        = "zip"
+  source_dir  = "${path.module}/../lambdas/query"
+  output_path = "${path.module}/.build/query.zip"
+  excludes    = ["tests", "README.md", "requirements.txt", "__pycache__"]
+}
+
+resource "aws_lambda_function" "query" {
+  function_name    = "${var.name_prefix}-query-${var.environment}"
+  role             = aws_iam_role.query.arn
+  runtime          = "python3.12"
+  handler          = "handler.lambda_handler"
+  filename         = data.archive_file.query.output_path
+  source_code_hash = data.archive_file.query.output_base64sha256
+  timeout          = 30
+  memory_size      = 128
+
+  environment {
+    variables = {
+      OPERATIONS_TABLE = aws_dynamodb_table.operations.name
+      ALERTS_TABLE     = aws_dynamodb_table.alerts.name
+    }
+  }
+}
+
+resource "aws_cloudwatch_log_group" "query" {
+  name              = "/aws/lambda/${aws_lambda_function.query.function_name}"
   retention_in_days = 14
 }
