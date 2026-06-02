@@ -4,17 +4,19 @@ name: Terraform
 # El packaging y deploy de las Lambdas lo hace Terraform (archive_file), así que
 # este workflow despliega también el código nuevo cuando cambian los handlers.
 
-on:
-  pull_request:
-    branches: [main]
-    paths: ["infra/**", "lambdas/**", ".github/workflows/terraform.yml"]
-  push:
-    branches: [main]
-    paths: ["infra/**", "lambdas/**", ".github/workflows/terraform.yml"]
-
-# Requiere estos secrets en el repo (Settings → Secrets → Actions):
+# Disparo MANUAL desde la pestaña Actions (workflow_dispatch). No corre en cada
+# push para no requerir credenciales AWS en GitHub ni desplegar sin querer.
+# Requiere estos secrets en el repo antes de ejecutarlo (Settings → Secrets → Actions):
 #   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
 # En producción, preferir OIDC (aws-actions/configure-aws-credentials con role-to-assume).
+on:
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: "Aplicar los cambios (apply). Si es false, solo muestra el plan."
+        type: boolean
+        default: false
+
 env:
   AWS_REGION: us-east-1
   TF_VAR_FILE: environments/dev.tfvars
@@ -49,7 +51,7 @@ jobs:
       - name: Terraform plan
         run: terraform plan -var-file=${{ env.TF_VAR_FILE }} -no-color -input=false
 
-      # Solo aplica al mergear a main, no en PRs.
+      # Solo aplica si se marcó el input "apply" al disparar el workflow.
       - name: Terraform apply
-        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        if: ${{ inputs.apply }}
         run: terraform apply -var-file=${{ env.TF_VAR_FILE }} -auto-approve -input=false
