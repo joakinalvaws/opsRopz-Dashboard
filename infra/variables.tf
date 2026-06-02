@@ -43,3 +43,24 @@ variable "bedrock_profile_regions" {
   type        = list(string)
   default     = ["us-east-1", "us-east-2", "us-west-2"]
 }
+
+# --- Semana 3: Notificaciones ---
+
+variable "n8n_webhook_url" {
+  description = "URL del webhook n8n en el VPS para recibir alertas SNS (vacío = suscripción no creada)"
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "ses_sender" {
+  description = "Email verificado en SES como remitente del reporte diario"
+  type        = string
+  default     = ""
+}
+
+variable "ses_recipient" {
+  description = "Email destinatario del reporte diario"
+  type        = string
+  default     = ""
+}

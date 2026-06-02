@@ -32,7 +32,7 @@ jobs:
         run: |
           # Cada Lambda es una unidad de deploy independiente con módulos del mismo
           # nombre (handler.py); se testean en procesos separados y se combina la cobertura.
-          for pkg in lambdas/processor lambdas/analyzer vps/simulator; do
+          for pkg in lambdas/processor lambdas/analyzer lambdas/dlq_monitor lambdas/daily_report vps/simulator; do
             coverage run -m pytest "$pkg"
           done
           coverage combine

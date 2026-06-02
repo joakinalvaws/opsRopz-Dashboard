@@ -86,6 +86,13 @@ data "aws_iam_policy_document" "analyzer" {
       ],
     )
   }
+
+  # Publicar alertas al topic SNS (Semana 3).
+  statement {
+    sid       = "PublishAlerts"
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.ops_alerts.arn]
+  }
 }
 
 resource "aws_iam_role_policy" "analyzer" {
@@ -96,5 +103,78 @@ resource "aws_iam_role_policy" "analyzer" {
 
 resource "aws_iam_role_policy_attachment" "analyzer_logs" {
   role       = aws_iam_role.analyzer.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+# --- Rol de la Lambda dlq_monitor ---
+
+resource "aws_iam_role" "dlq_monitor" {
+  name               = "${var.name_prefix}-dlq-monitor-${var.environment}"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
+}
+
+data "aws_iam_policy_document" "dlq_monitor" {
+  statement {
+    sid       = "ReadDLQAttributes"
+    actions   = ["sqs:GetQueueAttributes"]
+    resources = [aws_sqs_queue.events_dlq.arn]
+  }
+
+  statement {
+    sid       = "PublishAlerts"
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.ops_alerts.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "dlq_monitor" {
+  name   = "${var.name_prefix}-dlq-monitor-policy-${var.environment}"
+  role   = aws_iam_role.dlq_monitor.id
+  policy = data.aws_iam_policy_document.dlq_monitor.json
+}
+
+resource "aws_iam_role_policy_attachment" "dlq_monitor_logs" {
+  role       = aws_iam_role.dlq_monitor.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+# --- Rol de la Lambda daily_report ---
+
+resource "aws_iam_role" "daily_report" {
+  name               = "${var.name_prefix}-daily-report-${var.environment}"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
+}
+
+data "aws_iam_policy_document" "daily_report" {
+  statement {
+    sid       = "ScanOperations"
+    actions   = ["dynamodb:Scan"]
+    resources = [aws_dynamodb_table.operations.arn]
+  }
+
+  # SES SendEmail no admite restricción por identidad de forma consistente en
+  # todos los escenarios de sandbox/producción; se usa "*" y se confía en el
+  # rol como límite de blast radius.
+  statement {
+    sid       = "SendEmail"
+    actions   = ["ses:SendEmail"]
+    resources = ["*"]
+  }
+
+  statement {
+    sid       = "PublishReport"
+    actions   = ["sns:Publish"]
+    resources = [aws_sns_topic.ops_alerts.arn]
+  }
+}
+
+resource "aws_iam_role_policy" "daily_report" {
+  name   = "${var.name_prefix}-daily-report-policy-${var.environment}"
+  role   = aws_iam_role.daily_report.id
+  policy = data.aws_iam_policy_document.daily_report.json
+}
+
+resource "aws_iam_role_policy_attachment" "daily_report_logs" {
+  role       = aws_iam_role.daily_report.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }

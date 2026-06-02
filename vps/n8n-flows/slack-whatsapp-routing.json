@@ -1,0 +1,167 @@
+{
+  "name": "OpsRopz — Alertas SNS → Slack / WhatsApp",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sns-alerts",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "node-1",
+      "name": "SNS Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [240, 300],
+      "webhookId": "opsropz-sns-alerts"
+    },
+    {
+      "parameters": {
+        "jsCode": "// SNS envía el body como string en algunos casos; normalizar.\nconst raw = $input.first();\nlet body = raw.json.body || raw.json;\nif (typeof body === 'string') {\n  try { body = JSON.parse(body); } catch(e) {}\n}\n\n// Subscription Confirmation: devolver la URL para confirmarla.\nif (body.Type === 'SubscriptionConfirmation') {\n  return [{ json: { __type: 'confirm', subscribeURL: body.SubscribeURL } }];\n}\n\n// Notification: el campo Message es un JSON en string.\nlet msg;\ntry {\n  msg = typeof body.Message === 'string' ? JSON.parse(body.Message) : body.Message;\n} catch(e) {\n  msg = { analysis: body.Message, severity: 'info', rule: 'raw', sku: 'SISTEMA', correlation_id: 'unknown' };\n}\n\nreturn [{ json: { __type: 'notification', ...msg } }];"
+      },
+      "id": "node-2",
+      "name": "Parse SNS",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.__type }}",
+              "rightValue": "confirm",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "node-3",
+      "name": "¿Confirmación SNS?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.subscribeURL }}",
+        "options": {}
+      },
+      "id": "node-4",
+      "name": "Confirmar suscripción",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 160]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-2",
+              "leftValue": "={{ $json.severity }}",
+              "rightValue": "critico",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "node-5",
+      "name": "¿Es crítico?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 380]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ blocks: [ { type: 'header', text: { type: 'plain_text', text: '🚨 OpsRopz — CRÍTICO', emoji: true } }, { type: 'section', fields: [ { type: 'mrkdwn', text: '*SKU:*\\n' + $json.sku }, { type: 'mrkdwn', text: '*Alerta:*\\n' + $json.rule } ] }, { type: 'section', text: { type: 'mrkdwn', text: $json.analysis } }, { type: 'divider' }, { type: 'context', elements: [{ type: 'mrkdwn', text: '`Ref: ' + ($json.correlation_id || 'N/A') + '` · ' + ($json.timestamp || '') }] } ] }) }}",
+        "options": {}
+      },
+      "id": "node-6",
+      "name": "Slack Crítico",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 260]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.EVOLUTION_API_URL + '/message/sendText/' + $env.EVOLUTION_INSTANCE }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [{ "name": "apikey", "value": "={{ $env.EVOLUTION_API_KEY }}" }]
+        },
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ number: $env.WHATSAPP_MANAGER_NUMBER, text: '🚨 *OpsRopz CRÍTICO*\\n\\n*SKU:* ' + $json.sku + '\\n*Alerta:* ' + $json.rule + '\\n\\n' + $json.analysis + '\\n\\n_Ref: ' + ($json.correlation_id || 'N/A') + '_' }) }}",
+        "options": {}
+      },
+      "id": "node-7",
+      "name": "WhatsApp Crítico",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 420]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.SLACK_WEBHOOK_URL }}",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ blocks: [ { type: 'header', text: { type: 'plain_text', text: ($json.severity === 'alerta' ? '⚠️ OpsRopz — Alerta' : '📊 OpsRopz — Info'), emoji: true } }, { type: 'section', fields: [ { type: 'mrkdwn', text: '*SKU:*\\n' + ($json.sku || 'SISTEMA') }, { type: 'mrkdwn', text: '*Tipo:*\\n' + $json.rule } ] }, { type: 'section', text: { type: 'mrkdwn', text: $json.analysis } }, { type: 'context', elements: [{ type: 'mrkdwn', text: '`Ref: ' + ($json.correlation_id || 'N/A') + '`' }] } ] }) }}",
+        "options": {}
+      },
+      "id": "node-8",
+      "name": "Slack Alerta / Info",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 560]
+    }
+  ],
+  "connections": {
+    "SNS Webhook": {
+      "main": [[{ "node": "Parse SNS", "type": "main", "index": 0 }]]
+    },
+    "Parse SNS": {
+      "main": [[{ "node": "¿Confirmación SNS?", "type": "main", "index": 0 }]]
+    },
+    "¿Confirmación SNS?": {
+      "main": [
+        [{ "node": "Confirmar suscripción", "type": "main", "index": 0 }],
+        [{ "node": "¿Es crítico?", "type": "main", "index": 0 }]
+      ]
+    },
+    "¿Es crítico?": {
+      "main": [
+        [
+          { "node": "Slack Crítico", "type": "main", "index": 0 },
+          { "node": "WhatsApp Crítico", "type": "main", "index": 0 }
+        ],
+        [{ "node": "Slack Alerta / Info", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "notes": "Variables de entorno requeridas en n8n: SLACK_WEBHOOK_URL, EVOLUTION_API_URL, EVOLUTION_INSTANCE, EVOLUTION_API_KEY, WHATSAPP_MANAGER_NUMBER"
+  },
+  "pinData": {}
+}
