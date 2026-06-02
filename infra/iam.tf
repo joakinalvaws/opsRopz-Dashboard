@@ -93,6 +93,13 @@ data "aws_iam_policy_document" "analyzer" {
     actions   = ["sns:Publish"]
     resources = [aws_sns_topic.ops_alerts.arn]
   }
+
+  # Persistir alertas en la tabla de historial (Semana 4).
+  statement {
+    sid       = "WriteAlerts"
+    actions   = ["dynamodb:PutItem"]
+    resources = [aws_dynamodb_table.alerts.arn]
+  }
 }
 
 resource "aws_iam_role_policy" "analyzer" {
@@ -176,5 +183,39 @@ resource "aws_iam_role_policy" "daily_report" {
 
 resource "aws_iam_role_policy_attachment" "daily_report_logs" {
   role       = aws_iam_role.daily_report.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+# --- Rol de la Lambda query (Semana 4) ---
+
+resource "aws_iam_role" "query" {
+  name               = "${var.name_prefix}-query-${var.environment}"
+  assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
+}
+
+data "aws_iam_policy_document" "query" {
+  # Solo lectura: scan de operations + query de alerts.
+  statement {
+    sid = "ReadData"
+    actions = [
+      "dynamodb:Scan",
+      "dynamodb:Query",
+      "dynamodb:GetItem",
+    ]
+    resources = [
+      aws_dynamodb_table.operations.arn,
+      aws_dynamodb_table.alerts.arn,
+    ]
+  }
+}
+
+resource "aws_iam_role_policy" "query" {
+  name   = "${var.name_prefix}-query-policy-${var.environment}"
+  role   = aws_iam_role.query.id
+  policy = data.aws_iam_policy_document.query.json
+}
+
+resource "aws_iam_role_policy_attachment" "query_logs" {
+  role       = aws_iam_role.query.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
 }

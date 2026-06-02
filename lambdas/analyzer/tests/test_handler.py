@@ -72,6 +72,43 @@ def test_alert_generated_for_critical_stock(monkeypatch):
     assert alerts[0]["prompt_version"] == "v1"
 
 
+class _FakeAlertsTable:
+    def __init__(self):
+        self.items = []
+
+    def put_item(self, Item):  # noqa: N803 — firma de boto3
+        self.items.append(Item)
+
+
+def test_alert_persisted_to_table(monkeypatch):
+    _patch(monkeypatch, lambda body, **kw: "Reordenar 300 unidades.")
+    table = _FakeAlertsTable()
+    monkeypatch.setattr(handler, "_ALERTS_TABLE", "alerts")
+    monkeypatch.setattr(handler, "_alerts_table", table)
+
+    handler.lambda_handler(_stream_event(_critical_inventory_image()), None)
+
+    assert len(table.items) == 1
+    item = table.items[0]
+    assert item["alert_partition"] == "ALERT"
+    assert item["sku"] == "LECHE_GLORIA_1L"
+    assert item["severity"] == "critico"
+    assert item["rule"] == "stock_critico"
+    assert "#" in item["created_id"]  # sort key con timestamp + correlation_id
+    assert item["ttl"] > 0  # TTL configurado
+
+
+def test_no_persist_when_table_unset(monkeypatch):
+    _patch(monkeypatch, lambda body, **kw: "x")
+    table = _FakeAlertsTable()
+    monkeypatch.setattr(handler, "_ALERTS_TABLE", "")  # sin tabla
+    monkeypatch.setattr(handler, "_alerts_table", table)
+
+    handler.lambda_handler(_stream_event(_critical_inventory_image()), None)
+
+    assert table.items == []  # no-op: no persiste nada
+
+
 def test_healthy_item_no_bedrock_no_alert(monkeypatch):
     calls = []
     rec = _patch(monkeypatch, lambda body, **kw: calls.append(body) or "x")
