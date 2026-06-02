@@ -1,0 +1,55 @@
+name: Terraform
+
+# CD de infraestructura: plan en cada PR, apply al mergear a main.
+# El packaging y deploy de las Lambdas lo hace Terraform (archive_file), así que
+# este workflow despliega también el código nuevo cuando cambian los handlers.
+
+on:
+  pull_request:
+    branches: [main]
+    paths: ["infra/**", "lambdas/**", ".github/workflows/terraform.yml"]
+  push:
+    branches: [main]
+    paths: ["infra/**", "lambdas/**", ".github/workflows/terraform.yml"]
+
+# Requiere estos secrets en el repo (Settings → Secrets → Actions):
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY
+# En producción, preferir OIDC (aws-actions/configure-aws-credentials con role-to-assume).
+env:
+  AWS_REGION: us-east-1
+  TF_VAR_FILE: environments/dev.tfvars
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform:
+    name: plan / apply
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform init
+        run: terraform init
+
+      - name: Terraform plan
+        run: terraform plan -var-file=${{ env.TF_VAR_FILE }} -no-color -input=false
+
+      # Solo aplica al mergear a main, no en PRs.
+      - name: Terraform apply
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: terraform apply -var-file=${{ env.TF_VAR_FILE }} -auto-approve -input=false

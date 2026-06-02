@@ -10,6 +10,9 @@ En lugar de que los gerentes revisen reportes, **el sistema los busca a ellos
 cuando algo necesita atención**, explicándolo en lenguaje natural con
 recomendaciones accionables.
 
+**🔗 Demo en vivo:** [opsropz-dashboard.vercel.app](https://opsropz-dashboard.vercel.app)
+— KPIs de inventario y alertas generadas por IA, en tiempo real.
+
 ## Arquitectura
 
 ```
@@ -61,9 +64,11 @@ Plan de 5 semanas a medio tiempo. Progreso:
 - [x] **Semana 0** — Setup del repo, pre-commit, CI inicial, skeleton de Terraform, ADRs
 - [x] **Semana 1** — Pipeline event-driven (SQS → Lambda → DynamoDB) + simulador, desplegado en AWS
 - [x] **Semana 2** — Capa de IA: analyzer (DynamoDB Streams → Bedrock Claude Haiku 4.5), detección de anomalías, 59 tests, 94% cobertura. Desplegado y validado end-to-end — [ver ejemplos de alertas IA](docs/screenshots/sample-alerts.md)
-- [ ] **Semana 3** — Notificaciones (SNS/n8n/WhatsApp/Slack) + observabilidad
-- [ ] **Semana 4** — Dashboard en tiempo real (Next.js + API Gateway)
-- [ ] **Semana 5** — IaC completo, CI/CD y documentación final
+- [x] **Semana 3** — Notificaciones (SNS → n8n → WhatsApp/Slack con routing por severidad) + reporte diario (EventBridge → SES), CloudWatch Dashboard + alarmas, dlq_monitor. Verificado end-to-end.
+- [x] **Semana 4** — Dashboard en tiempo real (Next.js + API Gateway con API key) — [en vivo](https://opsropz-dashboard.vercel.app). Lambda `query`, tabla de alertas, proxy server-side ([ADR-0004](docs/decisions/0004-dashboard-server-side-api-key.md)).
+- [ ] **Semana 5** — CI/CD (Terraform en GitHub Actions), documentación final, video demo
+
+**78 tests** verdes (processor, analyzer, dlq_monitor, daily_report, query, simulator).
 
 ## Desarrollo local
 
@@ -88,3 +93,6 @@ Las decisiones técnicas relevantes están documentadas en
 
 - [0001 — Arquitectura híbrida AWS + VPS](docs/decisions/0001-hybrid-aws-vps.md)
 - [0002 — SSM Parameter Store en lugar de Secrets Manager](docs/decisions/0002-ssm-over-secrets-manager.md)
+- [0003 — Resiliencia: DLQ + fallos parciales de batch](docs/decisions/0003-dlq-batch-failures.md)
+- [0004 — Dashboard público con proxy server-side de la API key](docs/decisions/0004-dashboard-server-side-api-key.md)
+- [0005 — Claude Haiku 4.5 vía inference profile](docs/decisions/0005-claude-haiku-inference-profile.md)
