@@ -27,3 +27,23 @@ output "analyzer_function_name" {
   description = "Nombre de la Lambda analyzer"
   value       = aws_lambda_function.analyzer.function_name
 }
+
+output "ops_alerts_topic_arn" {
+  description = "ARN del topic SNS de alertas operacionales"
+  value       = aws_sns_topic.ops_alerts.arn
+}
+
+output "dlq_monitor_function_name" {
+  description = "Nombre de la Lambda dlq_monitor"
+  value       = aws_lambda_function.dlq_monitor.function_name
+}
+
+output "daily_report_function_name" {
+  description = "Nombre de la Lambda daily_report"
+  value       = aws_lambda_function.daily_report.function_name
+}
+
+output "cloudwatch_dashboard_url" {
+  description = "URL del CloudWatch Dashboard en la consola de AWS"
+  value       = "https://${var.aws_region}.console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#dashboards:name=${aws_cloudwatch_dashboard.main.dashboard_name}"
+}

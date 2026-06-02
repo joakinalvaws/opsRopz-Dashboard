@@ -2,13 +2,17 @@
 
 Por cada nuevo item KPI evalúa reglas de anomalía; si detecta una, pide a
 Bedrock (Claude Haiku 4.5) un análisis en lenguaje natural con recomendación y
-emite una alerta estructurada. La publicación a SNS se cablea en Semana 3.
+publica la alerta al topic SNS ops-alerts para su enrutamiento por n8n.
 """
 
 from __future__ import annotations
 
+import json
+import os
+from datetime import datetime, timezone
 from typing import Any
 
+import boto3
 from boto3.dynamodb.types import TypeDeserializer
 
 import bedrock_client
@@ -18,6 +22,38 @@ from logging_utils import log
 from prompts import PROMPT_VERSION, build_bedrock_body
 
 _deserializer = TypeDeserializer()
+_SNS_TOPIC_ARN = os.environ.get("SNS_TOPIC_ARN", "")
+_sns_client = None
+
+
+def _get_sns():
+    global _sns_client
+    if _sns_client is None:
+        _sns_client = boto3.client("sns")
+    return _sns_client
+
+
+def _publish_alert(item: dict[str, Any], anomaly, analysis: str) -> None:
+    """Publica la alerta al topic SNS. No-op si SNS_TOPIC_ARN no está configurado."""
+    if not _SNS_TOPIC_ARN:
+        return
+    message = {
+        "correlation_id": item.get("correlation_id"),
+        "sku": item.get("sku"),
+        "severity": anomaly.severity,
+        "rule": anomaly.rule,
+        "analysis": analysis,
+        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    subject = f"[OpsRopz] {anomaly.severity.upper()}: {anomaly.rule}"[:100]
+    try:
+        _get_sns().publish(
+            TopicArn=_SNS_TOPIC_ARN,
+            Subject=subject,
+            Message=json.dumps(message, ensure_ascii=False),
+        )
+    except Exception as exc:  # noqa: BLE001
+        log("ERROR", "sns_publish_failed", correlation_id=item.get("correlation_id"), error=str(exc))
 
 
 def _deserialize(image: dict[str, Any]) -> dict[str, Any]:
@@ -61,6 +97,7 @@ def _process_record(record: dict[str, Any]) -> None:
         prompt_version=PROMPT_VERSION,
         analysis=analysis,
     )
+    _publish_alert(item, anomaly, analysis)
 
 
 def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
