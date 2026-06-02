@@ -26,7 +26,7 @@ class _FakeDynamo:
     def __init__(self, table):
         self._table = table
 
-    def Table(self, name):
+    def Table(self, name):  # noqa: N802 — imita la API de boto3 resource
         return self._table
 
 
@@ -99,8 +99,14 @@ def test_kpis_inventory_sorted_critical_first(monkeypatch):
 
 def test_alerts_returns_recent_descending(monkeypatch):
     alerts = [
-        {"sku": "A", "severity": "critico", "rule": "stock_critico", "analysis": "x",
-         "correlation_id": "c1", "created_at": "2026-06-01T12:00:00Z"},
+        {
+            "sku": "A",
+            "severity": "critico",
+            "rule": "stock_critico",
+            "analysis": "x",
+            "correlation_id": "c1",
+            "created_at": "2026-06-01T12:00:00Z",
+        },
     ]
     table = _FakeTable(query_items=alerts)
     _setup(monkeypatch, table)

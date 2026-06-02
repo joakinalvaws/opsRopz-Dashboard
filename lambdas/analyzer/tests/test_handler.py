@@ -3,9 +3,9 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import bedrock_client  # noqa: E402
-import handler  # noqa: E402
-from bedrock_client import BedrockError  # noqa: E402
+import bedrock_client
+import handler
+from bedrock_client import BedrockError
 
 
 def _stream_event(*images, event_name="INSERT"):
@@ -147,7 +147,9 @@ def test_record_without_newimage_skipped(monkeypatch):
 def test_unexpected_error_reports_batch_failure(monkeypatch):
     rec = _patch(monkeypatch, lambda body, **kw: "x")
     # Forzar error inesperado en la evaluación.
-    monkeypatch.setattr(handler, "evaluate", lambda item: (_ for _ in ()).throw(RuntimeError("boom")))
+    monkeypatch.setattr(
+        handler, "evaluate", lambda item: (_ for _ in ()).throw(RuntimeError("boom"))
+    )
 
     result = handler.lambda_handler(_stream_event(_critical_inventory_image()), None)
 

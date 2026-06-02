@@ -12,7 +12,6 @@ import os
 import sys
 
 import boto3
-
 from events import generate_batch
 
 logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
@@ -24,9 +23,7 @@ def send_batch(events: list[dict], sqs_client, queue_url: str) -> int:
     sent = 0
     for i in range(0, len(events), 10):
         chunk = events[i : i + 10]
-        entries = [
-            {"Id": str(idx), "MessageBody": json.dumps(ev)} for idx, ev in enumerate(chunk)
-        ]
+        entries = [{"Id": str(idx), "MessageBody": json.dumps(ev)} for idx, ev in enumerate(chunk)]
         resp = sqs_client.send_message_batch(QueueUrl=queue_url, Entries=entries)
         sent += len(resp.get("Successful", []))
         for failure in resp.get("Failed", []):

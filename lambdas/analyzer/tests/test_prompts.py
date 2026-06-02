@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from prompts import (  # noqa: E402
+from prompts import (
     PROMPT_VERSION,
     SYSTEM_PROMPT,
     build_bedrock_body,

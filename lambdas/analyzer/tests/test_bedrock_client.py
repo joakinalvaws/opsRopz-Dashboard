@@ -8,8 +8,7 @@ from botocore.exceptions import ClientError
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import bedrock_client  # noqa: E402
-from bedrock_client import BedrockError, invoke  # noqa: E402
+from bedrock_client import BedrockError, invoke
 
 
 def _response(text):
@@ -55,7 +54,11 @@ def test_retries_on_throttling_then_succeeds():
 def test_exponential_backoff_sequence():
     sleeps = []
     client = FakeClient(
-        [_client_error("ThrottlingException"), _client_error("ServiceUnavailableException"), _response("ok")]
+        [
+            _client_error("ThrottlingException"),
+            _client_error("ServiceUnavailableException"),
+            _response("ok"),
+        ]
     )
     out = invoke({"messages": []}, client=client, sleep=sleeps.append, max_attempts=3)
     assert out == "ok"

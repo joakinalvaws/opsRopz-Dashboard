@@ -64,9 +64,11 @@ def test_simulator_to_dynamo_end_to_end(aws):
     assert sent == 5
 
     # 2) Drenar la cola como lo haría el event source mapping de Lambda.
-    received = aws["sqs"].receive_message(
-        QueueUrl=aws["queue_url"], MaxNumberOfMessages=10
-    ).get("Messages", [])
+    received = (
+        aws["sqs"]
+        .receive_message(QueueUrl=aws["queue_url"], MaxNumberOfMessages=10)
+        .get("Messages", [])
+    )
     assert len(received) == 5
 
     # 3) El processor consume el batch y persiste en DynamoDB.

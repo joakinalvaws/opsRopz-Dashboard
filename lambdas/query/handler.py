@@ -16,7 +16,6 @@ from typing import Any
 
 import boto3
 from boto3.dynamodb.conditions import Key
-
 from logging_utils import log
 
 _OPERATIONS_TABLE = os.environ.get("OPERATIONS_TABLE", "")
@@ -136,6 +135,6 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         if path.endswith("/alerts"):
             return _response(200, _get_alerts())
         return _response(404, {"error": "not_found", "path": path})
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         log("ERROR", "query_failed", path=path, error=str(exc))
         return _response(500, {"error": "internal_error"})

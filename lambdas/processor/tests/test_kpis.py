@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from kpis import days_of_stock, sales_vs_average_pct, stock_drop_pct  # noqa: E402
+from kpis import days_of_stock, sales_vs_average_pct, stock_drop_pct
 
 
 class TestDaysOfStock:

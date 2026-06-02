@@ -5,7 +5,7 @@ import pytest
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from normalize import InvalidEventError, build_item  # noqa: E402
+from normalize import InvalidEventError, build_item
 
 
 def _inventory_event(**overrides):
@@ -35,7 +35,9 @@ class TestBuildItem:
 
     def test_same_event_yields_same_event_id(self):
         # Idempotencia: mismo evento → misma clave → sobrescribe.
-        assert build_item(_inventory_event())["event_id"] == build_item(_inventory_event())["event_id"]
+        assert (
+            build_item(_inventory_event())["event_id"] == build_item(_inventory_event())["event_id"]
+        )
 
     def test_payload_fields_are_merged(self):
         item = build_item(_inventory_event())

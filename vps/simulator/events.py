@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import random
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 STORES = ["lima-centro", "lima-norte", "arequipa-01"]
@@ -28,7 +28,7 @@ ORDER_STATUSES = ["pending", "confirmed", "in_transit"]
 
 
 def _now_iso() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def _envelope(event_type: str, sku: str, rng: random.Random, payload: dict[str, Any]) -> dict:

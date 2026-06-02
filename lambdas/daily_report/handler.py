@@ -9,13 +9,12 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any
 
 import boto3
 from boto3.dynamodb.conditions import Attr
-
 from logging_utils import log
 
 _TABLE_NAME = os.environ.get("OPERATIONS_TABLE", "opsropz-operations-dev")
@@ -59,7 +58,7 @@ def _to_float(v: Any) -> float:
 
 
 def _scan_last_24h(table) -> list[dict]:
-    since = (datetime.now(timezone.utc) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    since = (datetime.now(UTC) - timedelta(hours=24)).strftime("%Y-%m-%dT%H:%M:%SZ")
     response = table.scan(FilterExpression=Attr("ingested_at").gte(since))
     items = list(response.get("Items", []))
     while "LastEvaluatedKey" in response:
@@ -104,7 +103,7 @@ def _build_report(items: list[dict], date_str: str) -> str:
 
 
 def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
-    date_str = datetime.now(timezone.utc).strftime("%d/%m/%Y")
+    date_str = datetime.now(UTC).strftime("%d/%m/%Y")
     table = _get_dynamo().Table(_TABLE_NAME)
     items = _scan_last_24h(table)
     body = _build_report(items, date_str)
