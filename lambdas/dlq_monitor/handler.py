@@ -8,11 +8,10 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import boto3
-
 from logging_utils import log
 
 _DLQ_URL = os.environ.get("DLQ_URL", "")
@@ -58,7 +57,7 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
                 f"La DLQ tiene {count} mensaje(s) pendiente(s) de análisis. "
                 "Revisar CloudWatch Logs del processor para identificar la causa raíz."
             ),
-            "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "timestamp": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "dlq_count": count,
         },
         ensure_ascii=False,

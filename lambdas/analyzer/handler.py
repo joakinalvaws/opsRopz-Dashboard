@@ -9,15 +9,14 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
-import boto3
-from boto3.dynamodb.types import TypeDeserializer
-
 import bedrock_client
+import boto3
 from anomalies import evaluate
 from bedrock_client import BedrockError
+from boto3.dynamodb.types import TypeDeserializer
 from logging_utils import log
 from prompts import PROMPT_VERSION, build_bedrock_body
 
@@ -56,7 +55,7 @@ def _persist_alert(item: dict[str, Any], anomaly, analysis: str) -> None:
     """
     if not _ALERTS_TABLE:
         return
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     created_at = now.strftime("%Y-%m-%dT%H:%M:%SZ")
     correlation_id = item.get("correlation_id") or "unknown"
     try:
@@ -74,7 +73,7 @@ def _persist_alert(item: dict[str, Any], anomaly, analysis: str) -> None:
                 "ttl": int(now.timestamp()) + _ALERT_TTL_DAYS * 86400,
             }
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         log("ERROR", "alert_persist_failed", correlation_id=correlation_id, error=str(exc))
 
 
@@ -88,7 +87,7 @@ def _publish_alert(item: dict[str, Any], anomaly, analysis: str) -> None:
         "severity": anomaly.severity,
         "rule": anomaly.rule,
         "analysis": analysis,
-        "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "timestamp": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
     subject = f"[OpsRopz] {anomaly.severity.upper()}: {anomaly.rule}"[:100]
     try:
@@ -97,8 +96,10 @@ def _publish_alert(item: dict[str, Any], anomaly, analysis: str) -> None:
             Subject=subject,
             Message=json.dumps(message, ensure_ascii=False),
         )
-    except Exception as exc:  # noqa: BLE001
-        log("ERROR", "sns_publish_failed", correlation_id=item.get("correlation_id"), error=str(exc))
+    except Exception as exc:
+        log(
+            "ERROR", "sns_publish_failed", correlation_id=item.get("correlation_id"), error=str(exc)
+        )
 
 
 def _deserialize(image: dict[str, Any]) -> dict[str, Any]:
@@ -154,7 +155,7 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
         seq = record.get("dynamodb", {}).get("SequenceNumber", "unknown")
         try:
             _process_record(record)
-        except Exception as exc:  # noqa: BLE001 — fallo inesperado: reintentar vía stream
+        except Exception as exc:
             log("ERROR", "processing_failed", sequence_number=seq, error=str(exc))
             failures.append({"itemIdentifier": seq})
 

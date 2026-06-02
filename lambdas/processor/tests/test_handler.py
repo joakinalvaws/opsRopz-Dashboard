@@ -13,9 +13,7 @@ TABLE_NAME = "opsropz-operations-test"
 
 def _sqs_event(*bodies):
     return {
-        "Records": [
-            {"messageId": f"msg-{i}", "body": json.dumps(b)} for i, b in enumerate(bodies)
-        ]
+        "Records": [{"messageId": f"msg-{i}", "body": json.dumps(b)} for i, b in enumerate(bodies)]
     }
 
 

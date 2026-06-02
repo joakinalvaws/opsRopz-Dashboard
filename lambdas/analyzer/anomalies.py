@@ -2,7 +2,7 @@
 
 Funciones puras (sin AWS ni I/O) que evalúan un item ya normalizado por el
 processor y devuelven una Anomaly si cruza algún umbral. Los umbrales salen de
-las tablas de módulos retail del plan (secciones 4.1–4.4).
+las tablas de módulos retail del plan (secciones 4.1-4.4).
 """
 
 from __future__ import annotations

@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -13,7 +13,7 @@ def _inv(sku, dos):
         "sku": sku,
         "event_type": "inventory_snapshot",
         "days_of_stock": Decimal(str(dos)),
-        "ingested_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "ingested_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
 
 
@@ -22,7 +22,7 @@ def _sale(sku, qty=10):
         "sku": sku,
         "event_type": "sale",
         "quantity": Decimal(str(qty)),
-        "ingested_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "ingested_at": datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
 
 
@@ -38,7 +38,7 @@ class _FakeDynamo:
     def __init__(self, items):
         self._items = items
 
-    def Table(self, name):
+    def Table(self, name):  # noqa: N802 — imita la API de boto3 resource
         return _FakeTable(self._items)
 
 

@@ -4,7 +4,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from events import (  # noqa: E402
+from events import (
     generate_batch,
     make_inventory_snapshot,
     make_sale,

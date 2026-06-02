@@ -13,7 +13,6 @@ from decimal import Decimal
 from typing import Any
 
 import boto3
-
 from logging_utils import log
 from normalize import InvalidEventError, build_item
 
@@ -60,7 +59,7 @@ def lambda_handler(event: dict[str, Any], context: Any) -> dict[str, Any]:
             # Evento malformado: no tiene sentido reintentarlo. Se loguea y se
             # descarta (no se agrega a failures) para que no sature la DLQ.
             log("ERROR", "invalid_event", message_id=message_id, error=str(exc))
-        except Exception as exc:  # noqa: BLE001 — fallo transitorio: reintentar vía SQS
+        except Exception as exc:
             log("ERROR", "processing_failed", message_id=message_id, error=str(exc))
             failures.append({"itemIdentifier": message_id})
 

@@ -3,7 +3,7 @@ import sys
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from anomalies import ALERT, CRITICAL, Anomaly, evaluate  # noqa: E402
+from anomalies import ALERT, CRITICAL, Anomaly, evaluate
 
 
 def _inv(days_of_stock):

@@ -6,7 +6,7 @@ derivados y devuelve el item listo para persistir. Sin I/O.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from kpis import days_of_stock
@@ -19,7 +19,7 @@ class InvalidEventError(ValueError):
 
 
 def _utc_now_iso() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 def build_item(event: dict[str, Any]) -> dict[str, Any]:

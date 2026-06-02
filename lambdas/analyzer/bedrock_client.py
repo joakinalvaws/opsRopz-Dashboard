@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 import os
 import time
-from typing import Callable
+from collections.abc import Callable
 
 import boto3
 from botocore.exceptions import ClientError
