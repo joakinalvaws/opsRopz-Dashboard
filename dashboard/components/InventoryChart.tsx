@@ -76,16 +76,20 @@ function LegendChip({ status }: { status: StockStatus }) {
 }
 
 export default function InventoryChart({ inventory }: { inventory: InventoryItem[] }) {
+  // Orden alfabético por SKU: la API devuelve el inventario crítico-primero,
+  // pero en el gráfico interesa comparar productos, no agruparlos por severidad
+  // (esa lectura ya la da la tabla de detalle).
   const data: Datum[] = inventory
     .filter((i) => i.days_of_stock !== null)
-    .slice(0, 15)
     .map((i) => ({
       sku: i.sku,
       dias: i.days_of_stock as number,
       stock: i.current_stock,
       store: i.store_id,
       status: classifyDays(i.days_of_stock),
-    }));
+    }))
+    .sort((a, b) => a.sku.localeCompare(b.sku))
+    .slice(0, 15);
 
   if (data.length === 0) {
     return (
