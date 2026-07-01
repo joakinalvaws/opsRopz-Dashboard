@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import KpiCards from "@/components/KpiCards";
 import InventoryChart from "@/components/InventoryChart";
+import InventoryTable from "@/components/InventoryTable";
 import AlertsList from "@/components/AlertsList";
 import type { AlertsResponse, KpisResponse } from "@/lib/types";
 
@@ -39,9 +40,14 @@ export default function Dashboard() {
   return (
     <main className="max-w-6xl mx-auto px-5 py-8">
       <header className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-2xl font-bold text-slate-100">OpsRopz</h1>
-          <p className="text-sm text-slate-400">Inteligencia operacional retail — en vivo</p>
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-slate-700 bg-gradient-to-br from-emerald-500/20 to-info/20 text-lg">
+            📦
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-100">OpsRopz</h1>
+            <p className="text-sm text-slate-400">Inteligencia operacional retail — en vivo</p>
+          </div>
         </div>
         <div className="text-right text-xs text-slate-500">
           <div className="flex items-center gap-2 justify-end">
@@ -61,16 +67,24 @@ export default function Dashboard() {
         </div>
       )}
 
-      <section className="mb-8">
+      <section className="mb-6">
         <KpiCards kpis={kpis} />
+      </section>
+
+      <section className="mb-6 rounded-xl bg-slate-800/30 border border-slate-700 p-5">
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-slate-300">
+            Salud del inventario — días de stock por SKU
+          </h2>
+          <span className="text-xs text-slate-500">{kpis?.inventory.length ?? 0} SKUs</span>
+        </div>
+        <InventoryChart inventory={kpis?.inventory ?? []} />
       </section>
 
       <div className="grid lg:grid-cols-2 gap-6">
         <section className="rounded-xl bg-slate-800/30 border border-slate-700 p-5">
-          <h2 className="text-sm font-semibold text-slate-300 mb-4">
-            Días de stock por SKU
-          </h2>
-          <InventoryChart inventory={kpis?.inventory ?? []} />
+          <h2 className="text-sm font-semibold text-slate-300 mb-4">Detalle de inventario</h2>
+          <InventoryTable inventory={kpis?.inventory ?? []} />
         </section>
 
         <section className="rounded-xl bg-slate-800/30 border border-slate-700 p-5">
