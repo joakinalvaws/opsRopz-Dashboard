@@ -1,4 +1,5 @@
 import type { Alert, Severity } from "@/lib/types";
+import { timeAgo } from "@/lib/time";
 
 const SEVERITY_STYLE: Record<Severity, { badge: string; label: string; icon: string }> = {
   critico: { badge: "bg-critical/20 text-critical border-critical/40", label: "Crítico", icon: "🚨" },
@@ -6,19 +7,15 @@ const SEVERITY_STYLE: Record<Severity, { badge: string; label: string; icon: str
   info: { badge: "bg-info/20 text-info border-info/40", label: "Info", icon: "📊" },
 };
 
-function timeAgo(iso: string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "ahora";
-  if (mins < 60) return `hace ${mins} min`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `hace ${hours} h`;
-  return `hace ${Math.floor(hours / 24)} d`;
-}
-
 export default function AlertsList({ alerts }: { alerts: Alert[] }) {
   if (alerts.length === 0) {
-    return <div className="text-slate-500 py-8 text-center">Sin alertas registradas</div>;
+    return (
+      <div className="flex flex-col items-center justify-center gap-1 py-10 text-center">
+        <span className="text-2xl">✓</span>
+        <span className="text-sm font-medium text-healthy">Todo en orden</span>
+        <span className="text-xs text-slate-500">Sin alertas activas</span>
+      </div>
+    );
   }
 
   return (
